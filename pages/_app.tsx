@@ -2,6 +2,12 @@ import "../styles/globals.css";
 import type { AppProps } from "next/app";
 import Head from "next/head";
 import { PrivyProvider } from "@privy-io/react-auth";
+import { toSolanaWalletConnectors } from "@privy-io/react-auth/solana";
+
+const solanaConnectors = toSolanaWalletConnectors({
+  // By default, shouldAutoConnect is enabled
+  shouldAutoConnect: true,
+});
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
@@ -43,8 +49,36 @@ function MyApp({ Component, pageProps }: AppProps) {
       <PrivyProvider
         appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID || ""}
         config={{
+          appearance: {
+            theme: "dark",
+            accentColor: "#d19900",
+            logo: "https://lpbot.io/logo.svg",
+            walletChainType: "solana-only",
+            showWalletLoginFirst: true,
+          },
+          loginMethods: [
+            "email",
+            "wallet",
+            "google",
+            "twitter",
+            "discord",
+            "github",
+          ],
+          externalWallets: {
+            solana: {
+              connectors: solanaConnectors,
+            },
+          },
+          solanaClusters: [
+            {
+              name: "mainnet-beta",
+              rpcUrl: process.env.NEXT_PUBLIC_SOLANA_RPC_URL!,
+            },
+          ],
           embeddedWallets: {
-            createOnLogin: "all-users",
+            solana: {
+              createOnLogin: "all-users",
+            },
           },
         }}
       >

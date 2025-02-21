@@ -2,6 +2,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { getAccessToken, usePrivy } from "@privy-io/react-auth";
 import Head from "next/head";
+import DelegateActionButton from "./delegateButton";
 
 async function verifyToken() {
   const url = "/api/verify";
@@ -73,6 +74,7 @@ export default function DashboardPage() {
               </button>
             </div>
             <div className="mt-12 flex gap-4 flex-wrap">
+              <DelegateActionButton />
               {googleSubject ? (
                 <button
                   onClick={() => {
