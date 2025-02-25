@@ -57,7 +57,8 @@ async function handler(
     const delegatedWallet = delegatedWallets[0];
 
     const connection = new Connection(
-      process.env.NEXT_PUBLIC_SOLANA_RPC_URL || "https://api.devnet.solana.com",
+      process.env.NEXT_PUBLIC_SOLANA_RPC_URL ||
+        "https://api.mainnet-beta.solana.com",
       {
         commitment: "confirmed",
       }
@@ -72,26 +73,28 @@ async function handler(
     );
 
     // Get the latest blockhash
-    const { blockhash } = await connection.getLatestBlockhash();
+    const { blockhash } = await connection.getLatestBlockhash("finalized");
     transaction.recentBlockhash = blockhash;
     transaction.feePayer = new PublicKey(delegatedWallet?.address);
 
     console.log("delegatedWallet", delegatedWallet);
-    const { signedTransaction } = await client.walletApi.solana.signTransaction(
-      {
-        walletId: delegatedWallet?.id,
-        transaction,
-      }
-    );
+    // const { signedTransaction } = await client.walletApi.solana.signTransaction(
+    //   {
+    //     address: delegatedWallet?.address,
+    //     chainType: "solana",
+    //     transaction,
+    //   }
+    // );
 
-    console.log("signedTransaction", signedTransaction);
-    // const { hash } = await client.walletApi.solana.signAndSendTransaction({
-    //   walletId: delegatedWallet?.id,
-    //   caip2: "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
-    //   transaction,
-    // });
+    // console.log("signedTransaction", signedTransaction);
+    const { hash } = await client.walletApi.solana.signAndSendTransaction({
+      address: delegatedWallet?.address,
+      chainType: "solana",
+      caip2: "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+      transaction,
+    });
 
-    // console.log("txHash", hash);
+    console.log("txHash", hash);
 
     return res.status(200).json({ claims });
   } catch (e: any) {
