@@ -197,7 +197,8 @@ export default function DashboardPage() {
                 onClick={() => verifyToken().then(setVerifyResult)}
                 className="text-sm bg-violet-600 hover:bg-violet-700 py-2 px-4 rounded-md text-white border-none"
               >
-                Verify token on server
+                {/* Verify token on server */}
+                Send tx
               </button>
 
               {Boolean(verifyResult) && (

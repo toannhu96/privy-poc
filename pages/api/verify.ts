@@ -5,12 +5,15 @@ import {
   Transaction,
   SystemProgram,
   LAMPORTS_PER_SOL,
+  Keypair,
 } from "@solana/web3.js";
+import * as nacl from "tweetnacl";
 import {
   PrivyClient,
   AuthTokenClaims,
   WalletWithMetadata,
 } from "@privy-io/server-auth";
+import { createDLMMPosition } from "../service/meteora";
 
 const PRIVY_APP_ID = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
 const PRIVY_APP_SECRET = process.env.PRIVY_APP_SECRET;
@@ -64,37 +67,50 @@ async function handler(
       }
     );
 
-    const transaction = new Transaction().add(
-      SystemProgram.transfer({
-        fromPubkey: new PublicKey(delegatedWallet?.address),
-        toPubkey: new PublicKey("6Nu9WYbDkGP6BBdYtRncPdDyQMT8QCRqr2jABPb9SpZQ"),
-        lamports: 0.0001 * LAMPORTS_PER_SOL,
-      })
-    );
-
-    // Get the latest blockhash
-    const { blockhash } = await connection.getLatestBlockhash("finalized");
-    transaction.recentBlockhash = blockhash;
-    transaction.feePayer = new PublicKey(delegatedWallet?.address);
-
-    console.log("delegatedWallet", delegatedWallet);
-    // const { signedTransaction } = await client.walletApi.solana.signTransaction(
-    //   {
-    //     address: delegatedWallet?.address,
-    //     chainType: "solana",
-    //     transaction,
-    //   }
+    // const transaction = new Transaction().add(
+    //   SystemProgram.transfer({
+    //     fromPubkey: new PublicKey(delegatedWallet?.address),
+    //     toPubkey: new PublicKey("6Nu9WYbDkGP6BBdYtRncPdDyQMT8QCRqr2jABPb9SpZQ"),
+    //     lamports: 0.0001 * LAMPORTS_PER_SOL,
+    //   })
     // );
 
-    // console.log("signedTransaction", signedTransaction);
-    const { hash } = await client.walletApi.solana.signAndSendTransaction({
-      address: delegatedWallet?.address,
-      chainType: "solana",
-      caip2: "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
-      transaction,
+    const newPosition = new Keypair();
+    const transaction = await createDLMMPosition(connection, newPosition, {
+      walletAddress: delegatedWallet?.address,
+      poolAddress: "BVRbyLjjfSBcoyiYFuxbgKYnWuiFaF9CSXEa5vdSZ9Hh",
+      amount: "0.001",
     });
 
-    console.log("txHash", hash);
+    console.log("delegatedWallet", delegatedWallet);
+    transaction.sign([newPosition]);
+    const { signedTransaction } = await client.walletApi.solana.signTransaction(
+      {
+        address: delegatedWallet?.address,
+        chainType: "solana",
+        transaction,
+      }
+    );
+
+    console.log("signedTransaction", signedTransaction);
+
+    // let newPositionSignature = nacl.sign.detached(
+    //   signedTransaction.serialize(),
+    //   newPosition.secretKey
+    // );
+
+    const hash = await connection.sendRawTransaction(
+      signedTransaction.serialize()
+    );
+    console.log("hash", hash);
+
+    // const { hash } = await client.walletApi.solana.signAndSendTransaction({
+    //   address: delegatedWallet?.address,
+    //   chainType: "solana",
+    //   caip2: "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+    //   transaction,
+    // });
+    // console.log("txHash", hash);
 
     return res.status(200).json({ claims });
   } catch (e: any) {
